@@ -1,0 +1,135 @@
+best-server/
+├── api/          
+├── core/         
+├── crud/         
+├── models/       
+├── schemas/      
+├── services/     
+├── static/       
+├── templates/    
+├── deps.py       
+└── main.py  
+
+best-server디렉토리 안에 위 구조로 폴더를 만들어줘
+fastapi서버를 구축하려해
+---------------------------------
+best-server에 파이썬 가상환경 .venv를 만들어줘
+--------------------------------------------
+best-server에 requirements.txt 를 생성하고
+아래 라이브러리를 등록해줘
+---
+fastapi 
+uvicorn
+pydantic
+python-dotenv
+oracledb
+pymysql
+jinja2
+sqlalchemy
+================================
+# Main entry point for FastAPI server
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column,String,Integer,DateTime,text,Identity
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
+
+#1. 오라클 연결 설정
+DB_URL ="oracle+oracledb://c##scott:tiger@localhost:1521/?service_name=xe"
+
+engine = create_engine(DB_URL,echo=True) #DB연결 및 커넥션 풀링 등 관리함
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base = declarative_base()
+
+#2. SQLAlchemy 모델 정의 (DB 테이블 매핑)
+class Member(Base):
+    __tablename__="members" # 테이블명 지정
+
+    #컬럼 정의
+    id = Column(Integer, Identity(start=1, cycle=False),primary_key=True)
+    name = Column(String(50), nullable=False)
+    email= Column(String(100), unique=True, nullable=False)
+    passwd= Column(String(100), nullable=False)
+    role=Column(String(20), default="USER")
+    refresh_token=Column(String(200))
+    create_at= Column(DateTime, default=datetime.now)
+    update_at= Column(DateTime)
+
+#3. Pydantic 모델 정의 (React에서 봰 데이터 검증)    
+class SignUpRequest(BaseModel):
+    name: str
+    email: str
+    passwd: str
+    role: str="USER"
+
+class MemberResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+    create_at: datetime
+
+
+#4. FastAPI앱 생성
+app=FastAPI()
+
+# 5. 모델에 근거한 db 테이블 자동 생성
+# Base.metadata.create_all(bind=engine)
+
+#6. React와 통신을 위한 CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], #  테스트용이므로 모두 허용
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+#6. DB 세션 의존성 : Session이 필요할 때 이 함수를 사용할 예정
+def get_db():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+#7. 회원가입 API Endpoint
+@app.post("/api/users")
+async def signup(user: SignUpRequest, db:Session= Depends(get_db)):
+    try:
+        # 이메일 중복여부 확인
+        existing_user = db.query(Member).filter(Member.email ==user.email).first()
+        if(existing_user):
+            # 이미 해당 이메일을 사용 중인 경우 에러 발생시키자
+            raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다. 다시 입력하세요")
+
+        #새 회원 객체 생성
+        new_user=Member(
+            name=user.name,
+            email=user.email,
+            passwd=user.passwd, #비번 암호화는 나중에
+            role=user.role
+        )
+        db.add(new_user) # insert문을 수행함
+        db.commit() # 트랜잭션 처리
+        db.refresh(new_user)
+
+        return {"result":"success", "message":"회원가입 성공!", "id": new_user.id}
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+# 모든 회원 조회
+@app.get('/api/users', response_model=list[Member])
+def get_all_users(db:Session= Depends(get_db)):
+    return db.query(Member).all()
+
+# 회원번호로 조회
+@app.get("/api/users/{id}", response_model=MemberResponse)
+def get_user(id:int, db:Session=Depends(get_db)):
+    user =db.query(Member).filter(Member.id== id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="해당 회원은 존재하지 않습니다")
+    return user
