@@ -6,3 +6,7 @@ oracledb
 pymysql
 jinja2
 sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic-settings

@@ -21,7 +21,7 @@ best-server/     # FastAPI 백엔드
 ### 2. 전체 회원목록 보기 (Admin)
 - 관리자는 전체 회원 목록을 조회할 수 있습니다.
 - 프론트엔드: `src/components/users/MemberList.jsx`
-- 백엔드: `/api/member.py`, `/crud/member_model.py`
+- 백엔드: `/api/member.py`, `/models/member_model.py`
 
 ### 3. JWT 로그인 인증 및 인가
 - 사용자는 로그인 시 JWT 토큰을 발급받아 인증 및 인가 처리를 합니다.
