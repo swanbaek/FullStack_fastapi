@@ -64,8 +64,7 @@ npm run dev
 ## 기타
 - DB 스키마: `best-server/members.sql`
 - 추가적인 기능 및 상세 구현은 각 폴더 내 파일 참고
-- Oracle Identity Summary.pdf 파일 내용도 참고
-- Sqlalchemy ORM_Fastapi.pdf  파일 내용도 참고
+
 ---
 
 ## 문의
