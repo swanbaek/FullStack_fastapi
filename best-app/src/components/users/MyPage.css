@@ -1,0 +1,41 @@
+.mypage-container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+
+.mypage-container h2 {
+  text-align: center;
+  margin-bottom: 28px;
+  color: #333;
+  font-size: 2rem;
+}
+
+.mypage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.mypage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mypage-label {
+  font-weight: 600;
+  color: #555;
+  min-width: 70px;
+}
+
+.mypage-value {
+  color: #222;
+  font-size: 1.05rem;
+  word-break: break-all;
+}
